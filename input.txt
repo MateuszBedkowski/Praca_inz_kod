@@ -1,0 +1,5 @@
+apache 1.2.5
+visual studio code 1.86
+ArchLinux
+Debian 10
+Fedora 38

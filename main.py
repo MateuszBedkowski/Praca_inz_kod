@@ -1,8 +1,9 @@
 import requests
 
+
 def search_cve(keyword):
     base_url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-    search_url = f"{base_url}?keywordSearch={keyword}"
+    search_url = f"{base_url}?keywordSearch={keyword}&keywordExactMatch"
 
     response = requests.get(search_url)
 
