@@ -1,0 +1,9 @@
+# Debian/Ubuntu
+dpkg --list | grep ^ii | awk '{print $2, $3}' > installed_packages.txt
+
+# Red Hat
+rpm -qa --queryformat '%{NAME} %{VERSION}\n' > installed_packages.txt
+
+# Arch
+
+pacman -Q
