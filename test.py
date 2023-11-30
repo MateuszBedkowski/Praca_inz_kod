@@ -26,7 +26,7 @@ def determine_linux_distribution():
                             print("Ubuntu/Debian detected\n")
                             return "ubuntu"
                         elif distro_id == "fedora":
-                            print("Fedora detecte\n")
+                            print("Fedora detected\n")
                             return "fedora"
                         elif distro_id == "arch":
                             print("Arch Linux detected\n")
