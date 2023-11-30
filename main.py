@@ -1,3 +1,4 @@
+import platform
 import requests
 import subprocess
 import time
@@ -10,6 +11,50 @@ def run_command(command):
     except subprocess.CalledProcessError as e:
         print(f"Error executing command: {e}")
         return None
+
+def determine_linux_distribution():
+    system = platform.system().lower()
+
+    if system == "linux":
+        try:
+            with open('/etc/os-release', 'r') as os_release:
+                lines = os_release.readlines()
+                for line in lines:
+                    if line.startswith("ID="):
+                        distro_id = line.split('=')[1].strip().lower()
+                        if distro_id == "ubuntu" or distro_id == "debian":
+                            print("Ubuntu/Debian detected\n")
+                            return "ubuntu"
+                        elif distro_id == "fedora":
+                            print("Fedora detecte\n")
+                            return "fedora"
+                        elif distro_id == "arch":
+                            print("Arch Linux detected\n")
+                            return "arch"
+        except FileNotFoundError:
+            print("Unable to read /etc/os-release. No supported package manager found.")
+        except Exception as e:
+            print(f'Error determining Linux distribution: {e}') 
+    print("Unsupported operating system")
+    return None
+
+def get_package_info():
+    distribution = determine_linux_distribution()
+
+    if distribution:
+        if distribution in ["debian", "ubuntu"]:
+            bash_command = "dpkg --list | grep ^ii | awk '{print $2, $3}' > result.txt"
+        elif distribution == "fedora":
+            bash_command = "rpm -qa --queryformat '%{NAME} %{VERSION}\n' > result.txt"
+        elif distribution == "arch":
+            bash_command = "pacman -Q > result.txt"
+        else:
+            print(f"Unsupported distribution: {distribution}")
+            return
+
+        run_command(bash_command)
+    else:
+        print("Unsupported operating system")
 
 def search_cve(keyword):
     base_url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
@@ -50,11 +95,8 @@ def search_cve(keyword):
     time.sleep(6)
 
 def main():
-    # Run the bash command and save the output to result.txt
-    bash_command = "dpkg --list | grep ^ii | awk '{print $2, $3}' > result.txt"
-    run_command(bash_command)
+    get_package_info()
 
-    # Read software names from result.txt and search for CVE information
     read_file = "result.txt"
     formatted_lines = []
 
@@ -62,10 +104,8 @@ def main():
         lines = result_file.readlines()
 
         for line in lines:
-            # Split the line into software name and version
             software_name, version = line.split()
 
-            # Extract major and minor version components
             version_match = re.match(r'(\S+)(?: (\d+(\.\d+)+))?', line)
             if version_match:
                 software_name = version_match.group(1)
@@ -73,10 +113,8 @@ def main():
                 formatted_line = f"{software_name} {formatted_version}\n"
                 formatted_lines.append(formatted_line)
 
-                # Send request only for the formatted name
                 search_cve(f"{software_name} {formatted_version}")
 
-    # Write the formatted lines back to result.txt
     with open(read_file, 'w') as result_file:
         result_file.writelines(formatted_lines)
 
