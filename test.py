@@ -22,7 +22,7 @@ def determine_linux_distribution():
                 for line in lines:
                     if line.startswith("ID="):
                         distro_id = line.split('=')[1].strip().lower()
-                        if distro_id == "ubuntu" or distro_id == "debian":
+                        if distro_id in ["debian", "ubuntu"]:
                             print("Ubuntu/Debian detected\n")
                             return "ubuntu"
                         elif distro_id == "fedora":
