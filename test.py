@@ -16,27 +16,26 @@ def determine_linux_distribution():
     system = platform.system().lower()
 
     if system == "linux":
-        apt_check_command = "which apt"
-        rpm_check_command = "which rpm"
-        pacman_check_command = "which pacman"
-
         try:
-            run_command(apt_check_command)
-            print("Debian/Ubuntu detected\n")
-            return "ubuntu"
-        except subprocess.CalledProcessError:
-            try:
-                run_command(rpm_check_command)
-                print("Fedora detected\n")
-                return "fedora"
-            except subprocess.CalledProcessError:
-                try:
-                    run_command(pacman_check_command)
-                    print("Arch Linux detected\n")
-                    return "arch"
-                except subprocess.CalledProcessError:
-                    print("No supported package manager found. Unable to determine Linux distribution.")
-
+            with open('/etc/os-release', 'r') as os_release:
+                lines = os_release.readlines()
+                for line in lines:
+                    if line.startswith("ID="):
+                        distro_id = line.split('=')[1].strip().lower()
+                        if distro_id == "ubuntu" or distro_id == "debian":
+                            print("Ubuntu/Debian detected\n")
+                            return "ubuntu"
+                        elif distro_id == "fedora":
+                            print("Fedora detecte\n")
+                            return "fedora"
+                        elif distro_id == "arch":
+                            print("Arch Linux detected\n")
+                            return "arch"
+        except FileNotFoundError:
+            print("Unable to read /etc/os-release. No supported package manager found.")
+        except Exception as e:
+            print(f'Error determining Linux distribution: {e}') 
+    print("Unsupported operating system")
     return None
 
 def get_package_info():
