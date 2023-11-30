@@ -42,7 +42,7 @@ def get_package_info():
     distribution = determine_linux_distribution()
 
     if distribution:
-        if distribution in ["debian", "ubuntu"]:
+        if distribution == "ubuntu":
             bash_command = "dpkg --list | grep ^ii | awk '{print $2, $3}' > result.txt"
         elif distribution == "fedora":
             bash_command = "rpm -qa --queryformat '%{NAME} %{VERSION}\n' > result.txt"
