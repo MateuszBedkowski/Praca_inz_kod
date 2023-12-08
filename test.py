@@ -3,6 +3,7 @@ import requests
 import subprocess
 import time
 import re
+import json
 
 def run_command(command):
     try:
@@ -56,67 +57,72 @@ def get_package_info():
     else:
         print("Unsupported operating system")
 
-def search_cve(keyword):
-    base_url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-    search_url = f"{base_url}?keywordSearch={keyword}&keywordExactMatch"
+def search_cve(keywords):
+    base_url = "http://vulnagent.rbdeveloper.eu/description"
+    search_url = base_url
 
-    response = requests.get(search_url)
+    headers = {'Content-Type': 'application/json'}
+
+    # Use the json parameter to encode the data
+    response = requests.post(search_url, headers=headers, json={"keywords": keywords})
 
     if response.status_code == 200:
         data = response.json()
-        if 'result' in data:
-            cve_items = data['result']['CVE_Items']
-            totalResults = data['totalResults']
-            
-            if totalResults > 0:
-                print(f"\nTotal vulnerabilities found for {keyword}: {totalResults}\n")
-                
-            for cve in cve_items:
-                cve_id = cve['cve']['CVE_data_meta']['ID']
-                description = cve['cve']['description']['description_data'][0]['value']
-                
+
+        for keyword, cve_list in data.items():
+            print(f"\nTotal vulnerabilities found for {keyword}: {len(cve_list)}\n")
+
+            for cve_info in cve_list:
+                cve_id = cve_info.get('cveId', '')
+                description = cve_info.get('description', '')
+                url = cve_info.get('url', '')
+
                 print(f"CVE ID: {cve_id}")
                 print(f"Description: {description}")
+                print(f"URL: {url}")
                 print("--------------------------------------------------------------\n")
-            if not cve_items:
-                print(f"No vulnerabilities found for {keyword}")
-                print("--------------------------------------------------------------\n")
-        else:
-            print(f"No vulnerabilities found for {keyword}")
-            print("--------------------------------------------------------------\n")
+
     elif response.status_code == 404:
-        print(f"No CVE information found for {keyword}")
+        print(f"No CVE information found")
         print("--------------------------------------------------------------\n")
     else:
         print(f"Error: {response.status_code}")
         print("--------------------------------------------------------------\n")
 
     # Add a sleep of 6 seconds after each request
-    time.sleep(6)
+    time.sleep(0.1)
+
 
 def main():
     get_package_info()
 
-    read_file = "result.txt"
+    input_file = "input.txt"
     formatted_lines = []
 
-    with open(read_file, 'r') as result_file:
-        lines = result_file.readlines()
+    with open(input_file, 'r') as input_file:
+        lines = input_file.readlines()
 
+        keywords = []
         for line in lines:
-            software_name, version = line.split()
+            # Split the line into software_name and version
+            parts = line.strip().split(maxsplit=1)
 
-            version_match = re.match(r'(\S+)(?: (\d+(\.\d+)+))?', line)
-            if version_match:
-                software_name = version_match.group(1)
-                formatted_version = version_match.group(2) or ''
-                formatted_line = f"{software_name} {formatted_version}\n"
-                formatted_lines.append(formatted_line)
+            # Check if there is a version, otherwise use an empty string
+            software_name = parts[0]
+            version = parts[1] if len(parts) > 1 else ""
 
-                search_cve(f"{software_name} {formatted_version}")
+            # Format the line and append to the list
+            formatted_line = f"{software_name} {version}"
+            formatted_lines.append(formatted_line)
 
-    with open(read_file, 'w') as result_file:
-        result_file.writelines(formatted_lines)
+            # Append to the keywords list
+            keywords.append(f'"{formatted_line}"')
+
+    # Join the keywords list into a string
+    keywords_str = ", ".join(keywords)
+
+    # Send keywords in the body of the request
+    search_cve(keywords_str)
 
 if __name__ == "__main__":
     main()

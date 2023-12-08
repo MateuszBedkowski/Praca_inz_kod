@@ -22,11 +22,11 @@ def determine_linux_distribution():
                 for line in lines:
                     if line.startswith("ID="):
                         distro_id = line.split('=')[1].strip().lower()
-                        if distro_id == "ubuntu" or distro_id == "debian":
+                        if distro_id in ["debian", "ubuntu"]:
                             print("Ubuntu/Debian detected\n")
                             return "ubuntu"
                         elif distro_id == "fedora":
-                            print("Fedora detecte\n")
+                            print("Fedora detected\n")
                             return "fedora"
                         elif distro_id == "arch":
                             print("Arch Linux detected\n")
@@ -42,7 +42,7 @@ def get_package_info():
     distribution = determine_linux_distribution()
 
     if distribution:
-        if distribution in ["debian", "ubuntu"]:
+        if distribution == "ubuntu":
             bash_command = "dpkg --list | grep ^ii | awk '{print $2, $3}' > result.txt"
         elif distribution == "fedora":
             bash_command = "rpm -qa --queryformat '%{NAME} %{VERSION}\n' > result.txt"
@@ -57,30 +57,30 @@ def get_package_info():
         print("Unsupported operating system")
 
 def search_cve(keyword):
-    base_url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-    search_url = f"{base_url}?keywordSearch={keyword}&keywordExactMatch"
+    base_url = "http://vulnagent.rbdeveloper.eu/description"
+    search_url = f"{base_url}/{keyword}"
 
     response = requests.get(search_url)
 
     if response.status_code == 200:
         data = response.json()
-        if 'result' in data:
-            cve_items = data['result']['CVE_Items']
-            totalResults = data['totalResults']
-            
-            if totalResults > 0:
-                print(f"\nTotal vulnerabilities found for {keyword}: {totalResults}\n")
-                
-            for cve in cve_items:
-                cve_id = cve['cve']['CVE_data_meta']['ID']
-                description = cve['cve']['description']['description_data'][0]['value']
-                
-                print(f"CVE ID: {cve_id}")
-                print(f"Description: {description}")
-                print("--------------------------------------------------------------\n")
-            if not cve_items:
+
+        if data and isinstance(data, list):
+            if not data:
                 print(f"No vulnerabilities found for {keyword}")
                 print("--------------------------------------------------------------\n")
+            else:
+                print(f"\nTotal vulnerabilities found for {keyword}: {len(data)}\n")
+
+                for cve_info in data:
+                    cve_id = cve_info.get('cveId', '')
+                    description = cve_info.get('description', '')
+                    url = cve_info.get('url', '')
+
+                    print(f"CVE ID: {cve_id}")
+                    print(f"Description: {description}")
+                    print(f"URL: {url}")
+                    print("--------------------------------------------------------------\n")
         else:
             print(f"No vulnerabilities found for {keyword}")
             print("--------------------------------------------------------------\n")
@@ -92,7 +92,7 @@ def search_cve(keyword):
         print("--------------------------------------------------------------\n")
 
     # Add a sleep of 6 seconds after each request
-    time.sleep(6)
+    time.sleep(0.1)
 
 def main():
     get_package_info()
