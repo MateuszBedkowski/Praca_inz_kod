@@ -5,6 +5,9 @@ import time
 import re
 import json
 
+
+MAX_KEYWORDS_PER_REQUEST = 5
+
 def run_command(command):
     try:
         result = subprocess.run(command, shell=True, check=True, text=True, stdout=subprocess.PIPE)
@@ -58,71 +61,77 @@ def get_package_info():
         print("Unsupported operating system")
 
 def search_cve(keywords):
-    base_url = "http://vulnagent.rbdeveloper.eu/description"
-    search_url = base_url
+    url = "http://vulnagent.rbdeveloper.eu/descriptions"
 
-    headers = {'Content-Type': 'application/json'}
+    headers = {
+        'accept': '*/*',
+        'Content-Type': 'application/json',
+    }
 
-    # Use the json parameter to encode the data
-    response = requests.post(search_url, headers=headers, json={"keywords": keywords})
+    # Split the keywords into chunks of MAX_KEYWORDS_PER_REQUEST
+    for i in range(0, len(keywords), MAX_KEYWORDS_PER_REQUEST):
+        chunk_keywords = keywords[i:i + MAX_KEYWORDS_PER_REQUEST]
 
-    if response.status_code == 200:
-        data = response.json()
+        payload = json.dumps(chunk_keywords)
+        response = requests.post(url, headers=headers, data=payload)
+        print(payload)
 
-        for keyword, cve_list in data.items():
-            print(f"\nTotal vulnerabilities found for {keyword}: {len(cve_list)}\n")
+        try:
+            response.raise_for_status()
 
-            for cve_info in cve_list:
-                cve_id = cve_info.get('cveId', '')
-                description = cve_info.get('description', '')
-                url = cve_info.get('url', '')
+            data = response.json()
+            if data and isinstance(data, list):
+                if not data:
+                    print(f"No vulnerabilities found for {chunk_keywords}")
+                else:
+                    print(f"\nTotal vulnerabilities found for {chunk_keywords}: {len(data)}\n")
 
-                print(f"CVE ID: {cve_id}")
-                print(f"Description: {description}")
-                print(f"URL: {url}")
-                print("--------------------------------------------------------------\n")
+                    for cve_info in data:
+                        cve_id = cve_info.get('cveId', '')
+                        description = cve_info.get('description', '')
+                        url = cve_info.get('url', '')
 
-    elif response.status_code == 404:
-        print(f"No CVE information found")
-        print("--------------------------------------------------------------\n")
-    else:
-        print(f"Error: {response.status_code}")
-        print("--------------------------------------------------------------\n")
+                        print(f"CVE ID: {cve_id}")
+                        print(f"Description: {description}")
+                        print(f"URL: {url}")
+                        print("--------------------------------------------------------------\n")
+            else:
+                print(f"No vulnerabilities found for {chunk_keywords}")
 
-    # Add a sleep of 6 seconds after each request
-    time.sleep(0.1)
+        except requests.exceptions.HTTPError as err:
+            print(f"HTTP error: {err}")
+        except json.JSONDecodeError:
+            print(f"No vulnerabilities found for {chunk_keywords}")
 
+        # Add a sleep of 6 seconds after each request
+        time.sleep(1)
 
 def main():
-    get_package_info()
+    try:
+        # Read package information from input.txt
+        with open("input.txt", 'r') as input_file:
+            lines = input_file.readlines()
 
-    input_file = "input.txt"
-    formatted_lines = []
+            formatted_lines = []
+            formatted_lines.append(lines)
+            for line in lines:
+                version_match = re.match(r'(\S+)(?: (\d+(\.\d+)+))?', line)
+                if version_match:
+                    software_name = version_match.group(1)
+                    formatted_version = version_match.group(2) or ''
+                    formatted_line = f"{software_name} {formatted_version}"
+                    #formatted_lines.append(formatted_line)
+                formatted_lines.append(software_name)
 
-    with open(input_file, 'r') as input_file:
-        lines = input_file.readlines()
-
-        keywords = []
-        for line in lines:
-            # Split the line into software_name and version
-            parts = line.strip().split(maxsplit=1)
-
-            # Check if there is a version, otherwise use an empty string
-            software_name = parts[0]
-            version = parts[1] if len(parts) > 1 else ""
-
-            # Format the line and append to the list
-            formatted_line = f"{software_name} {version}"
-            formatted_lines.append(formatted_line)
-
-            # Append to the keywords list
-            keywords.append(f'"{formatted_line}"')
-
-    # Join the keywords list into a string
-    keywords_str = ", ".join(keywords)
-
-    # Send keywords in the body of the request
-    search_cve(keywords_str)
+        if formatted_lines:
+            keywords = formatted_lines  # Use the entire list as a bulked JSON array
+            search_cve(keywords)
+        else:
+            print("No software information found in the input file.")
+    except FileNotFoundError:
+        print("Error: input.txt not found.")
+    except Exception as e:
+        print(f"Error reading input file: {e}")
 
 if __name__ == "__main__":
     main()
