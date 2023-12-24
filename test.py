@@ -6,7 +6,7 @@ import re
 import json
 
 
-MAX_KEYWORDS_PER_REQUEST = 5
+MAX_KEYWORDS_PER_REQUEST = 10
 
 def run_command(command):
     try:
@@ -74,7 +74,6 @@ def search_cve(keywords):
 
         payload = json.dumps(chunk_keywords)
         response = requests.post(url, headers=headers, data=payload)
-        print(payload)
 
         try:
             response.raise_for_status()
@@ -90,7 +89,15 @@ def search_cve(keywords):
                         cve_id = cve_info.get('cveId', '')
                         description = cve_info.get('description', '')
                         url = cve_info.get('url', '')
+                        software_name = ''
 
+                        # Extract software name from the description
+                        for keyword in chunk_keywords:
+                            if keyword.lower() in description.lower():
+                                software_name = keyword
+                                break
+
+                        print(f"Software: {software_name}")
                         print(f"CVE ID: {cve_id}")
                         print(f"Description: {description}")
                         print(f"URL: {url}")
@@ -103,35 +110,30 @@ def search_cve(keywords):
         except json.JSONDecodeError:
             print(f"No vulnerabilities found for {chunk_keywords}")
 
-        # Add a sleep of 6 seconds after each request
         time.sleep(1)
 
 def main():
-    try:
-        # Read package information from input.txt
-        with open("input.txt", 'r') as input_file:
-            lines = input_file.readlines()
+    get_package_info()
 
-            formatted_lines = []
-            formatted_lines.append(lines)
-            for line in lines:
-                version_match = re.match(r'(\S+)(?: (\d+(\.\d+)+))?', line)
-                if version_match:
-                    software_name = version_match.group(1)
-                    formatted_version = version_match.group(2) or ''
-                    formatted_line = f"{software_name} {formatted_version}"
-                    #formatted_lines.append(formatted_line)
-                formatted_lines.append(software_name)
+    read_file = "result.txt"
+    formatted_lines = []
 
-        if formatted_lines:
-            keywords = formatted_lines  # Use the entire list as a bulked JSON array
-            search_cve(keywords)
-        else:
-            print("No software information found in the input file.")
-    except FileNotFoundError:
-        print("Error: input.txt not found.")
-    except Exception as e:
-        print(f"Error reading input file: {e}")
+    with open(read_file, 'r') as result_file:
+        lines = result_file.readlines()
+
+        for line in lines:
+            version_match = re.match(r'(\S+)(?: (\d+(\.\d+)+))?', line)
+            if version_match:
+                software_name = version_match.group(1)
+                formatted_version = version_match.group(2) or ''
+                formatted_line = f"{software_name} {formatted_version}"
+                formatted_lines.append(formatted_line)
+
+    if formatted_lines:
+        keywords = formatted_lines  # Use the entire list as a bulked JSON array
+        search_cve(keywords)
+    else:
+        print("No software information found in the result file.")
 
 if __name__ == "__main__":
     main()

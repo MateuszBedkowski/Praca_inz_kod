@@ -2,7 +2,6 @@ import platform
 import requests
 import subprocess
 import time
-import re
 import json
 
 
@@ -41,24 +40,6 @@ def determine_linux_distribution():
             print(f'Error determining Linux distribution: {e}') 
     print("Unsupported operating system")
     return None
-
-def get_package_info():
-    distribution = determine_linux_distribution()
-
-    if distribution:
-        if distribution == "ubuntu":
-            bash_command = "dpkg --list | grep ^ii | awk '{print $2, $3}' > result.txt"
-        elif distribution == "fedora":
-            bash_command = "rpm -qa --queryformat '%{NAME} %{VERSION}\n' > result.txt"
-        elif distribution == "arch":
-            bash_command = "pacman -Q > result.txt"
-        else:
-            print(f"Unsupported distribution: {distribution}")
-            return
-
-        run_command(bash_command)
-    else:
-        print("Unsupported operating system")
 
 def search_cve(keywords):
     url = "http://vulnagent.rbdeveloper.eu/descriptions"
@@ -113,27 +94,26 @@ def search_cve(keywords):
         time.sleep(1)
 
 def main():
-    get_package_info()
+    # Read from input.txt and write to result.txt
+    read_file = "input.txt"
+    write_file = "result.txt"
 
-    read_file = "result.txt"
     formatted_lines = []
 
-    with open(read_file, 'r') as result_file:
-        lines = result_file.readlines()
+    with open(read_file, 'r') as input_file:
+        lines = input_file.readlines()
 
         for line in lines:
-            version_match = re.match(r'(\S+)(?: (\d+(\.\d+)+))?', line)
-            if version_match:
-                software_name = version_match.group(1)
-                formatted_version = version_match.group(2) or ''
-                formatted_line = f"{software_name} {formatted_version}"
-                formatted_lines.append(formatted_line)
+            formatted_lines.append(line.strip())
 
     if formatted_lines:
+        with open(write_file, 'w') as result_file:
+            result_file.write("\n".join(formatted_lines))
+
         keywords = formatted_lines  # Use the entire list as a bulked JSON array
         search_cve(keywords)
     else:
-        print("No software information found in the result file.")
+        print("No software information found in the input file.")
 
 if __name__ == "__main__":
     main()
