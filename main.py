@@ -110,7 +110,7 @@ def search_cve(keywords):
         except json.JSONDecodeError:
             print(f"No vulnerabilities found for {chunk_keywords}")
 
-        time.sleep(1)
+        time.sleep(0.5)
 
 def main():
     get_package_info()

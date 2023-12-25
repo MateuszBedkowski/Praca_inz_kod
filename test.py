@@ -5,7 +5,6 @@ import time
 import re
 import json
 
-
 MAX_KEYWORDS_PER_REQUEST = 10
 
 def run_command(command):
@@ -60,6 +59,55 @@ def get_package_info():
     else:
         print("Unsupported operating system")
 
+def generate_html_table(vulnerabilities):
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            th, td {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+        </style>
+    </head>
+    <body>
+    <table>
+        <tr>
+            <th>Software</th>
+            <th>CVE ID</th>
+            <th>Description</th>
+            <th>URL</th>
+        </tr>
+    """
+
+    for vulnerability in vulnerabilities:
+        html_content += f"""
+        <tr>
+            <td>{vulnerability['software_name']}</td>
+            <td>{vulnerability['cve_id']}</td>
+            <td>{vulnerability['description']}</td>
+            <td><a href="{vulnerability['url']}" target="_blank">{vulnerability['url']}</a></td>
+        </tr>
+        """
+
+    html_content += """
+    </table>
+    </body>
+    </html>
+    """
+
+    with open("result.html", "w") as result_file:
+        result_file.write(html_content)
+
 def search_cve(keywords):
     url = "http://vulnagent.rbdeveloper.eu/descriptions"
 
@@ -67,6 +115,8 @@ def search_cve(keywords):
         'accept': '*/*',
         'Content-Type': 'application/json',
     }
+
+    vulnerabilities = []
 
     # Split the keywords into chunks of MAX_KEYWORDS_PER_REQUEST
     for i in range(0, len(keywords), MAX_KEYWORDS_PER_REQUEST):
@@ -97,11 +147,13 @@ def search_cve(keywords):
                                 software_name = keyword
                                 break
 
-                        print(f"Software: {software_name}")
-                        print(f"CVE ID: {cve_id}")
-                        print(f"Description: {description}")
-                        print(f"URL: {url}")
-                        print("--------------------------------------------------------------\n")
+                        vulnerabilities.append({
+                            'software_name': software_name,
+                            'cve_id': cve_id,
+                            'description': description,
+                            'url': url
+                        })
+
             else:
                 print(f"No vulnerabilities found for {chunk_keywords}")
 
@@ -110,7 +162,10 @@ def search_cve(keywords):
         except json.JSONDecodeError:
             print(f"No vulnerabilities found for {chunk_keywords}")
 
-        time.sleep(1)
+        time.sleep(0.5)
+
+    if vulnerabilities:
+        generate_html_table(vulnerabilities)
 
 def main():
     get_package_info()

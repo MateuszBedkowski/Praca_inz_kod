@@ -1,0 +1,67 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            th, td {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+        </style>
+    </head>
+    <body>
+    <table>
+        <tr>
+            <th>Software</th>
+            <th>CVE ID</th>
+            <th>Description</th>
+            <th>URL</th>
+        </tr>
+    
+        <tr>
+            <td>acpid </td>
+            <td>CVE-2009-4033</td>
+            <td>A certain Red Hat patch for acpid 1.0.4 effectively triggers a call to the open function with insufficient arguments, which might allow local users to leverage weak permissions on /var/log/acpid, and obtain sensitive information by reading this file,</td>
+            <td><a href="http://www.securityfocus.com/bid/37249" target="_blank">http://www.securityfocus.com/bid/37249</a></td>
+        </tr>
+        
+        <tr>
+            <td>acpid </td>
+            <td>CVE-2009-4235</td>
+            <td>acpid 1.0.4 sets an unrestrictive umask, which might allow local users to leverage weak permissions on /var/log/acpid, and obtain sensitive information by reading this file or cause a denial of service by overwriting this file, a different vulnerabil</td>
+            <td><a href="https://bugzilla.redhat.com/show_bug.cgi?id=542926" target="_blank">https://bugzilla.redhat.com/show_bug.cgi?id=542926</a></td>
+        </tr>
+        
+        <tr>
+            <td>acpid </td>
+            <td>CVE-2011-1159</td>
+            <td>acpid.c in acpid before 2.0.9 does not properly handle a situation in which a process has connected to acpid.socket but is not reading any data, which allows local users to cause a denial of service (daemon hang) via a crafted application that perfor</td>
+            <td><a href="http://www.securityfocus.com/bid/45915" target="_blank">http://www.securityfocus.com/bid/45915</a></td>
+        </tr>
+        
+        <tr>
+            <td>acpid </td>
+            <td>CVE-2011-2777</td>
+            <td>samples/powerbtn/powerbtn.sh in acpid (aka acpid2) 2.0.16 and earlier uses the pidof program incorrectly, which allows local users to gain privileges by running a program with the name kded4 and a DBUS_SESSION_BUS_ADDRESS environment variable contain</td>
+            <td><a href="https://bugs.launchpad.net/ubuntu/+source/acpid/+bug/893821" target="_blank">https://bugs.launchpad.net/ubuntu/+source/acpid/+bug/893821</a></td>
+        </tr>
+        
+        <tr>
+            <td>acpid </td>
+            <td>CVE-2011-4578</td>
+            <td>event.c in acpid (aka acpid2) before 2.0.11 does not have an appropriate umask setting during execution of event-handler scripts, which might allow local users to (1) perform write operations within directories created by a script, or (2) read files </td>
+            <td><a href="https://bugzilla.redhat.com/show_bug.cgi?id=760984" target="_blank">https://bugzilla.redhat.com/show_bug.cgi?id=760984</a></td>
+        </tr>
+        
+    </table>
+    </body>
+    </html>
+    
