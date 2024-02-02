@@ -75,6 +75,7 @@ def search_cve(keywords):
         payload = json.dumps(chunk_keywords)
         response = requests.post(url, headers=headers, data=payload)
 
+        
         try:
             response.raise_for_status()
 
@@ -106,7 +107,10 @@ def search_cve(keywords):
                 print(f"No vulnerabilities found for {chunk_keywords}")
 
         except requests.exceptions.HTTPError as err:
-            print(f"HTTP error: {err}")
+            if response.status_code == 404:
+                print(f"No vulnerabilities found for {chunk_keywords}")
+            else:
+                print(f"HTTP error: {err}")
         except json.JSONDecodeError:
             print(f"No vulnerabilities found for {chunk_keywords}")
 
