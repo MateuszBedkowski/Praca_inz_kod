@@ -89,7 +89,7 @@ def search_cve(keywords):
                     for cve_info in data:
                         cve_id = cve_info.get('cveId', '')
                         description = cve_info.get('description', '')
-                        url = cve_info.get('url', '')
+                        cve_url = cve_info.get('url', '')
                         software_name = ''
 
                         # Extract software name from the description
@@ -101,7 +101,7 @@ def search_cve(keywords):
                         print(f"Software: {software_name}")
                         print(f"CVE ID: {cve_id}")
                         print(f"Description: {description}")
-                        print(f"URL: {url}")
+                        print(f"URL: {cve_url}")
                         print("--------------------------------------------------------------\n")
             else:
                 print(f"No vulnerabilities found for {chunk_keywords}")
