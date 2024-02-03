@@ -6,6 +6,7 @@ import re
 import json
 
 MAX_KEYWORDS_PER_REQUEST = 10
+open_file = "xdg-open result.html"
 
 def run_command(command):
     try:
@@ -138,7 +139,7 @@ def search_cve(keywords):
                     for cve_info in data:
                         cve_id = cve_info.get('cveId', '')
                         description = cve_info.get('description', '')
-                        url = cve_info.get('url', '')
+                        cve_url = cve_info.get('url', '')
                         software_name = ''
 
                         # Extract software name from the description
@@ -151,14 +152,17 @@ def search_cve(keywords):
                             'software_name': software_name,
                             'cve_id': cve_id,
                             'description': description,
-                            'url': url
+                            'url': cve_url
                         })
 
             else:
                 print(f"No vulnerabilities found for {chunk_keywords}")
 
         except requests.exceptions.HTTPError as err:
-            print(f"HTTP error: {err}")
+            if response.status_code == 404:
+                print(f"No vulnerabilities found for {chunk_keywords}")
+            else:
+                print(f"HTTP error: {err}")
         except json.JSONDecodeError:
             print(f"No vulnerabilities found for {chunk_keywords}")
 
@@ -189,6 +193,8 @@ def main():
         search_cve(keywords)
     else:
         print("No software information found in the result file.")
+        
+    run_command(open_file)
 
 if __name__ == "__main__":
     main()
