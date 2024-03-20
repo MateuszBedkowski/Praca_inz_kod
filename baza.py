@@ -9,13 +9,12 @@ def odczytaj_pliki_json_w_folderze(folder_path):
                 with open(pełna_ścieżka, 'r', encoding='utf-8') as plik:
                     try:
                         zawartość_json = json.load(plik)
-                        # Tutaj możesz przetworzyć zawartość pliku JSON według potrzeb
-                        #print(f'Zawartość pliku JSON {pełna_ścieżka}:')
-                        print(json.dumps(zawartość_json, indent=2))  # Wyświetla sformatowaną zawartość JSON
+                        
+                        print(json.dumps(zawartość_json, indent=2)) 
                         print('\n' + '-'*40 + '\n')
                     except json.JSONDecodeError as e:
                         print(f'Błąd podczas odczytu pliku JSON {pełna_ścieżka}: {e}')
 
-# Przykład użycia
+
 folder_path = r'C:\Users\bedko\Downloads\cvelistV5-main'
 odczytaj_pliki_json_w_folderze(folder_path)
